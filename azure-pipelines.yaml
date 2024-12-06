@@ -1,5 +1,5 @@
 trigger:
-- main
+  - main  # Ensure this matches the branch where your code is stored
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -8,18 +8,22 @@ variables:
   imageName: 'dccloudimage'
 
 steps:
-- task: UseDotNet@2
-  inputs:
-    packageType: 'sdk'
-    version: '6.x'
-- script: |
-    docker build -t $(imageName) .
-    docker tag $(imageName) <YourRegistry>.azurecr.io/$(imageName):$(Build.BuildId)
-    docker push <YourRegistry>.azurecr.io/$(imageName):$(Build.BuildId)
-  displayName: 'Build and Push Docker Image'
+  # Use the .NET SDK if your app requires it
+  - task: UseDotNet@2
+    inputs:
+      packageType: 'sdk'
+      version: '6.x'
 
-- task: AzureWebAppContainer@1
-  inputs:
-    azureSubscription: '<YourAzureServiceConnection>'
-    appName: '<YourWebAppName>'
-    imageName: '<YourRegistry>.azurecr.io/$(imageName):$(Build.BuildId)'
+  # Build, tag, and push the Docker image
+  - script: |
+      docker build -t $(imageName) .
+      docker tag $(imageName) dccloudregistrykaran.azurecr.io/$(imageName):$(Build.BuildId)
+      docker push dccloudregistrykaran.azurecr.io/$(imageName):$(Build.BuildId)
+    displayName: 'Build and Push Docker Image'
+
+  # Deploy the image to Azure App Service for Containers
+  - task: AzureWebAppContainer@1
+    inputs:
+      azureSubscription: 'Azure for Students'  # Replace with your Azure service connection name
+      appName: 'dccloudwebappkaran'                       # Replace with your App Service name
+      imageName: 'dccloudregistrykaran.azurecr.io/$(imageName):$(Build.BuildId)'  # Replace <YourRegistry> with your ACR name
