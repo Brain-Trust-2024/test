@@ -1,0 +1,25 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  imageName: 'dccloudimage'
+
+steps:
+- task: UseDotNet@2
+  inputs:
+    packageType: 'sdk'
+    version: '6.x'
+- script: |
+    docker build -t $(imageName) .
+    docker tag $(imageName) <YourRegistry>.azurecr.io/$(imageName):$(Build.BuildId)
+    docker push <YourRegistry>.azurecr.io/$(imageName):$(Build.BuildId)
+  displayName: 'Build and Push Docker Image'
+
+- task: AzureWebAppContainer@1
+  inputs:
+    azureSubscription: '<YourAzureServiceConnection>'
+    appName: '<YourWebAppName>'
+    imageName: '<YourRegistry>.azurecr.io/$(imageName):$(Build.BuildId)'
